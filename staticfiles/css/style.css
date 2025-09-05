@@ -1,7 +1,6 @@
-
 body {
-    color: #fff;
-    background-color: #000; /* Fallback for when the canvas isn't running */
+    color: #e0e0e0;
+    background-color: #121212; /* A standard dark theme background color */
 }
 
 #background-canvas {
@@ -14,47 +13,62 @@ body {
 }
 
 .navbar {
-    border-bottom: 1px solid #444;
+    background-color: #1f1f1f;
+    border-bottom: 1px solid #333;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    padding: 0.75rem 1.5rem;
 }
 
 .card {
-    background-color: rgba(20, 20, 30, 0.85);
+    background-color: #1e1e1e; /* A solid, slightly lighter dark color */
     border: 1px solid #444;
-    backdrop-filter: blur(10px);
 }
 
 .list-group-item {
     background-color: transparent;
     border-bottom: 1px solid #444;
-    color: #eee;
+    color: #f5f5f5;
 }
 
 .form-control {
-    background-color: #333;
-    color: #fff;
+    background-color: #2c2c2c;
+    color: #f5f5f5;
     border: 1px solid #555;
 }
 
 .form-control:focus {
-    background-color: #444;
-    color: #fff;
-    border-color: #777;
-    box-shadow: none;
+    background-color: #383838;
+    color: #f5f5f5;
+    border-color: #888;
+    box-shadow: 0 0 0 0.2rem rgba(126, 87, 194, 0.25);
 }
 
 .btn-primary {
-    background-color: #6200ea;
+    background-color: #7e57c2; /* A slightly softer purple */
     border: none;
+    transition: background-color 0.3s ease;
 }
 
 .btn-primary:hover {
-    background-color: #7f39fb;
+    background-color: #9575cd;
 }
 
 a {
-    color: #bb86fc;
+    color: #90caf9; /* A nice, readable blue for links */
 }
 
 a:hover {
-    color: #d1a5ff;
+    color: #bbdefb;
+}
+
+/* Ensure headings and other text elements are clearly visible */
+h1, h2, h3, h4, h5, h6, p, label {
+    color: #f5f5f5;
+}
+
+/* Welcome message specific styling if needed */
+.welcome-message {
+    color: #ffffff;
+    font-size: 1.5rem;
+    text-align: center;
 }

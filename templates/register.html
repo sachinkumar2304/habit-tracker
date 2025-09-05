@@ -28,13 +28,14 @@
               if (input) {
                 input.classList.add(
                   "w-full","p-3","border","border-gray-300","rounded-lg",
-                  "focus:ring-2","focus:ring-purple-500","focus:outline-none"
+                  "focus:ring-2","focus:ring-purple-500","focus:outline-none",
+                  "text-black","placeholder-gray-400"   // 👈 yeh add kiya
                 );
               }
             });
           </script>
           
-          <!-- Help text (Visible in gray box with dark letters) -->
+          <!-- Help text -->
           {% if field.help_text %}
             <div class="bg-gray-100 text-gray-800 text-sm rounded-lg p-2 mt-2">
               {{ field.help_text }}

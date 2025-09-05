@@ -3,7 +3,8 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
-from .forms import HabitForm
+from .forms import HabitForm, CustomLoginForm
+from django.contrib.auth.views import LoginView
 from .models import Habit, HabitRecord
 from datetime import timedelta
 import json
@@ -26,6 +27,11 @@ def register_view(request):
     return render(request, "register.html", {"form": form})
 
 
+
+class CustomLoginView(LoginView):
+    authentication_form = CustomLoginForm
+    template_name = 'login.html'
+    
 # ✅ Login View
 @never_cache
 def login_view(request):
