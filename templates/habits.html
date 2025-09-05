@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}My Habits{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mt-5">
+            <div class="card-body">
+                <h2 class="card-title">🌟 My Habits</h2>
+                <ul class="list-group list-group-flush">
+                    {% for item in habit_data %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ item.habit.name }}
+                            <div>
+                                {% if item.completed_today %}
+                                    <span class="badge bg-success">✅ Completed Today</span>
+                                {% else %}
+                                    <a href="{% url 'complete_habit' item.habit.id %}" class="btn btn-sm btn-outline-primary">
+                                        ✅ Mark as Done
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'progress' item.habit.id %}" class="btn btn-sm btn-outline-secondary">📊 Progress</a>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">No habits yet. Start by adding one!</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mt-5">
+            <div class="card-body">
+                <h2 class="card-title">📅 Recent History</h2>
+                <ul class="list-group list-group-flush">
+                    {% for rec in history %}
+                        <li class="list-group-item">
+                            {{ rec.habit.name }} - {{ rec.date }} -
+                            {% if rec.completed %} ✅ Done {% else %} ❌ Missed {% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">No history yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

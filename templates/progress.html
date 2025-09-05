@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass p-8 max-w-xl mx-auto fade-in">
+  <h2 class="text-2xl font-bold mb-4 text-purple-300">📊 Progress - {{ habit.name }}</h2>
+  <div class="grid grid-cols-7 gap-3">
+    {% for record in records_json|safe|json_script:"records" %}
+    {% endfor %}
+  </div>
+  <canvas id="progressChart" class="mt-6"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const data = JSON.parse(document.getElementById('records').textContent);
+  const ctx = document.getElementById('progressChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.date),
+      datasets: [{
+        label: 'Completion',
+        data: data.map(d => d.completed ? 1 : 0),
+        backgroundColor: data.map(d => d.completed ? 'rgba(72, 187, 120, 0.8)' : 'rgba(229, 62, 62, 0.8)')
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 1 } }
+    }
+  });
+</script>
+{% endblock %}

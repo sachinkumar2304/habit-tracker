@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Container -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <!-- Greeting + Quick stats -->
+  <section class="grid md:grid-cols-3 gap-6">
+    <div class="md:col-span-3 glass rounded-2xl p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold">Welcome back, <span class="text-purple-400">@{{ user.username }}</span> 👋</h1>
+          <p class="text-gray-300 mt-1">Stay consistent. Tiny wins → big results.</p>
+        </div>
+        <div class="grid grid-cols-3 gap-3 w-full md:w-auto">
+          <div class="rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 p-4 text-white text-center">
+            <div class="text-sm opacity-90">Habits</div>
+            <div class="text-2xl font-bold">{{ habit_data|length }}</div>
+          </div>
+          <div class="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 p-4 text-white text-center">
+            <div class="text-sm opacity-90">Done Today</div>
+            <div class="text-2xl font-bold">
+              {% with 0 as count %}
+              {% for item in habit_data %}{% if item.completed_today %}{% widthratio 1 1 1 %}{% endif %}{% endfor %}
+              {% endwith %}
+              <!-- simple fallback, JS updates accurate counts below -->
+              <span id="doneTodayCount">0</span>
+            </div>
+          </div>
+          <div class="rounded-xl bg-gradient-to-br from-cyan-600 to-blue-600 p-4 text-white text-center">
+            <div class="text-sm opacity-90">Streak (days)</div>
+            <div class="text-2xl font-bold" id="overallStreak">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quote of the Day -->
+  <section class="glass rounded-2xl p-6 flex items-center justify-between gap-6">
+    <div>
+      <div class="text-sm uppercase tracking-wider text-gray-400">Quote of the day</div>
+      <blockquote class="text-xl md:text-2xl font-semibold mt-1" id="quoteText">Keep going.</blockquote>
+    </div>
+    <div class="hidden md:block text-5xl">✨</div>
+  </section>
+
+  <!-- Charts + Goals -->
+  <section class="grid md:grid-cols-3 gap-6">
+    <!-- Weekly Progress Chart -->
+    <div class="md:col-span-2 glass rounded-2xl p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold">Weekly Progress</h3>
+    <span class="text-sm text-gray-400">Completions per day (last 7)</span>
+  </div>
+  <div class="h-64"> <!-- fixed height wrapper -->
+    <canvas id="weeklyChart"></canvas>
+  </div>
+</div>
+
+
+    <!-- Goals -->
+    <div class="glass rounded-2xl p-6">
+      <h3 class="text-lg font-semibold mb-4">Goals 🎯</h3>
+      <div class="space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm text-gray-300">Weekly Consistency</span>
+            <span class="text-sm text-gray-300" id="weeklyConsistencyPct">0%</span>
+          </div>
+          <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+            <div id="weeklyConsistencyBar" class="h-3 bg-gradient-to-r from-purple-500 to-blue-500" style="width:0%"></div>
+          </div>
+          <div class="text-xs text-gray-400 mt-1">Completions vs. total possible (habits × 7)</div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm text-gray-300">Today’s Completion</span>
+            <span class="text-sm text-gray-300" id="todayPct">0%</span>
+          </div>
+          <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+            <div id="todayBar" class="h-3 bg-gradient-to-r from-indigo-500 to-cyan-500" style="width:0%"></div>
+          </div>
+          <div class="text-xs text-gray-400 mt-1">How many habits you’ve marked done today</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Streaks per habit + Leaderboard -->
+  <section class="grid md:grid-cols-3 gap-6">
+    <!-- Streaks per habit -->
+    <div class="md:col-span-2 glass rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Your Habits & Streaks 🔥</h3>
+        <a href="{% url 'add_habit' %}" class="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm hover:opacity-90">+ Add Habit</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="text-left text-gray-300">
+            <tr>
+              <th class="py-2 pr-4">Habit</th>
+              <th class="py-2 pr-4">Streak</th>
+              <th class="py-2 pr-4">Today</th>
+              <th class="py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/10" id="habitRows">
+            {% for item in habit_data %}
+            <tr class="hover:bg-white/5">
+              <td class="py-3 pr-4 font-medium">{{ item.habit.name }}</td>
+              <td class="py-3 pr-4"><span class="inline-flex items-center gap-1"><span class="text-xl">🔥</span><span class="font-semibold" data-streak-for="{{ item.habit.id }}">0</span> days</span></td>
+              <td class="py-3 pr-4">
+                {% if item.completed_today %}
+                  <span class="badge bg-success">✅ Done</span>
+                {% else %}
+                  <span class="text-gray-400">Not yet</span>
+                {% endif %}
+              </td>
+              <td class="py-3">
+                {% if item.completed_today %}
+                  <a href="{% url 'progress' item.habit.id %}" class="text-sm px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20">📊 Progress</a>
+                {% else %}
+                  <a href="{% url 'complete_habit' item.habit.id %}" class="text-sm px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:opacity-90">✅ Mark Done</a>
+                  <a href="{% url 'progress' item.habit.id %}" class="ml-2 text-sm px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20">📊</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td class="py-4 text-gray-400" colspan="4">No habits yet. Start by adding one!</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Leaderboard (placeholder) -->
+    <div class="glass rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-lg font-semibold">Leaderboard 🥇</h3>
+        <span class="text-xs text-gray-400">Coming soon</span>
+      </div>
+      <ul class="space-y-3 text-sm">
+        <li class="flex items-center justify-between">
+          <span class="flex items-center gap-2"><span>1.</span><span class="font-semibold">You</span></span>
+          <span class="px-2 py-0.5 rounded bg-white/10">streak: <span id="leaderYourStreak">0</span></span>
+        </li>
+        <li class="flex items-center justify-between">
+          <span class="flex items-center gap-2"><span>2.</span><span>Friend A</span></span>
+          <span class="px-2 py-0.5 rounded bg-white/10">streak: 9</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <span class="flex items-center gap-2"><span>3.</span><span>Friend B</span></span>
+          <span class="px-2 py-0.5 rounded bg-white/10">streak: 7</span>
+        </li>
+      </ul>
+      <p class="text-xs text-gray-400 mt-3">We’ll hook this to real data later.</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- Data payload from Django -->
+<script>
+  // History (last 7 days) from server → JS
+  const historyData = [
+    {% for rec in history %}
+      {
+        habit: "{{ rec.habit.name|escapejs }}",
+        habitId: {{ rec.habit.id }},
+        date: "{{ rec.date|date:'Y-m-d' }}",
+        completed: {{ rec.completed|yesno:"true,false" }}
+      }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  // Habits today state
+  const habits = [
+    {% for item in habit_data %}
+      { id: {{ item.habit.id }}, name: "{{ item.habit.name|escapejs }}", completed_today: {{ item.completed_today|yesno:"true,false" }} }
+      {% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+</script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // --- Quote of the Day (rotates daily) ---
+  const quotes = [
+    "Discipline is the bridge between goals and success.",
+    "Small habits every day lead to big achievements.",
+    "You do not rise to the level of your goals. You fall to the level of your systems.",
+    "Motivation gets you going, habit keeps you growing.",
+    "A little progress each day adds up to big results."
+  ];
+  const now = new Date();
+  const dayIndex = Math.floor((Date.parse(now.toDateString()) / 86400000)) % quotes.length;
+  document.getElementById("quoteText").textContent = quotes[dayIndex];
+
+  // --- Aggregate history by date for weekly chart ---
+  const byDate = {};
+  historyData.forEach(r => {
+    if (!byDate[r.date]) byDate[r.date] = 0;
+    if (r.completed) byDate[r.date] += 1;
+  });
+
+  // Build last 7 dates (ensure empty days show as 0)
+  const days = [...Array(7)].map((_,i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().slice(0,10);
+  });
+  const labels = days.map(d => {
+    const dd = new Date(d);
+    return dd.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  });
+  const values = days.map(d => byDate[d] || 0);
+
+  // Chart
+  const ctx = document.getElementById('weeklyChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Completions',
+        data: values
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, ticks: { precision:0 } } }
+    }
+  });
+
+  // --- Today progress + weekly consistency ---
+  const totalHabits = habits.length || 1;
+  const doneToday = habits.filter(h => h.completed_today).length;
+  document.getElementById('doneTodayCount').textContent = doneToday;
+
+  const todayPct = Math.round((doneToday / totalHabits) * 100);
+  document.getElementById('todayPct').textContent = todayPct + '%';
+  document.getElementById('todayBar').style.width = todayPct + '%';
+
+  const totalPossible = totalHabits * 7 || 1;
+  const totalCompletedLast7 = values.reduce((a,b)=>a+b,0);
+  const weeklyPct = Math.round((totalCompletedLast7 / totalPossible) * 100);
+  document.getElementById('weeklyConsistencyPct').textContent = weeklyPct + '%';
+  document.getElementById('weeklyConsistencyBar').style.width = weeklyPct + '%';
+
+  // --- Streaks (last 7 only; extend later from backend) ---
+  // For each habit, count consecutive days from today backwards where completed==true
+  const byHabitByDate = {};
+  historyData.forEach(r => {
+    const key = r.habitId;
+    if (!byHabitByDate[key]) byHabitByDate[key] = {};
+    byHabitByDate[key][r.date] = r.completed;
+  });
+
+  const todayISO = new Date().toISOString().slice(0,10);
+  function dateMinus(iso, n) {
+    const d = new Date(iso);
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0,10);
+  }
+
+  let overall = 0;
+  habits.forEach(h => {
+    let streak = 0;
+    for (let i=0;i<7;i++){
+      const d = dateMinus(todayISO, i);
+      const ok = byHabitByDate[h.id] && byHabitByDate[h.id][d];
+      if (ok) streak += 1; else break;
+    }
+    overall = Math.max(overall, streak);
+    const el = document.querySelector(`[data-streak-for="${h.id}"]`);
+    if (el) el.textContent = streak;
+  });
+  document.getElementById('overallStreak').textContent = overall;
+  document.getElementById('leaderYourStreak').textContent = overall;
+</script>
+{% endblock %}

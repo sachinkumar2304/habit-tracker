@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 py-12 px-6">
+  <div class="w-full max-w-md bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
+    
+    <!-- Heading -->
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-3">🔑 Welcome Back!</h2>
+    <p class="text-center text-gray-500 mb-6">Login to continue tracking your habits 🚀</p>
+    
+    <!-- Form -->
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+      
+      {% for field in form %}
+        <div>
+          <!-- Label -->
+          <label class="block text-gray-700 font-medium mb-1">{{ field.label }}</label>
+          
+          <!-- Input with border -->
+          {{ field }}
+          
+          <script>
+            document.addEventListener("DOMContentLoaded", function() {
+              let input = document.querySelector("[name='{{ field.name }}']");
+              if (input) {
+                input.classList.add(
+                  "w-full","p-3","border","border-gray-300","rounded-lg",
+                  "focus:ring-2","focus:ring-purple-500","focus:outline-none"
+                );
+              }
+            });
+          </script>
+          
+          <!-- Errors -->
+          {% if field.errors %}
+            <div class="bg-red-100 text-red-600 p-2 rounded-lg text-sm mt-1">
+              {{ field.errors }}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+      
+      <!-- Non-field errors -->
+      {% if form.non_field_errors %}
+        <div class="bg-red-100 text-red-600 p-2 rounded-lg text-sm">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+      
+      <!-- Submit Button -->
+      <button type="submit"
+              class="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold shadow-md hover:opacity-90 transition">
+        Login
+      </button>
+    </form>
+    
+    <!-- Register link -->
+    <p class="mt-6 text-center text-gray-600">
+      Don’t have an account? 
+      <a href="{% url 'register' %}" class="text-purple-600 hover:underline font-medium">Register here</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

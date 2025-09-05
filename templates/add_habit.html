@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass p-8 max-w-md mx-auto fade-in">
+  <h2 class="text-2xl font-bold mb-6 text-purple-300">➕ Add New Habit</h2>
+  <form method="POST" class="space-y-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn-glow px-6 py-2 rounded-lg w-full">Save Habit</button>
+  </form>
+</div>
+{% endblock %}
