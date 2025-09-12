@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %} 
 {% load static %}
 {% block title %}Dashboard{% endblock %}
 
@@ -22,16 +22,12 @@
           <div class="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 p-4 text-white text-center">
             <div class="text-sm opacity-90">Done Today</div>
             <div class="text-2xl font-bold">
-              {% with 0 as count %}
-              {% for item in habit_data %}{% if item.completed_today %}{% widthratio 1 1 1 %}{% endif %}{% endfor %}
-              {% endwith %}
-              <!-- simple fallback, JS updates accurate counts below -->
-              <span id="doneTodayCount">0</span>
+                {{ done_today_count }}
             </div>
           </div>
           <div class="rounded-xl bg-gradient-to-br from-cyan-600 to-blue-600 p-4 text-white text-center">
             <div class="text-sm opacity-90">Streak (days)</div>
-            <div class="text-2xl font-bold" id="overallStreak">0</div>
+            <div class="text-2xl font-bold">{{ overall_streak }}</div>
           </div>
         </div>
       </div>
@@ -51,15 +47,14 @@
   <section class="grid md:grid-cols-3 gap-6">
     <!-- Weekly Progress Chart -->
     <div class="md:col-span-2 glass rounded-2xl p-6">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-lg font-semibold">Weekly Progress</h3>
-    <span class="text-sm text-gray-400">Completions per day (last 7)</span>
-  </div>
-  <div class="h-64"> <!-- fixed height wrapper -->
-    <canvas id="weeklyChart"></canvas>
-  </div>
-</div>
-
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Weekly Progress</h3>
+        <span class="text-sm text-gray-400">Completions per day (last 7)</span>
+      </div>
+      <div class="h-64">
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </div>
 
     <!-- Goals -->
     <div class="glass rounded-2xl p-6">
@@ -112,7 +107,7 @@
             {% for item in habit_data %}
             <tr class="hover:bg-white/5">
               <td class="py-3 pr-4 font-medium">{{ item.habit.name }}</td>
-              <td class="py-3 pr-4"><span class="inline-flex items-center gap-1"><span class="text-xl">🔥</span><span class="font-semibold" data-streak-for="{{ item.habit.id }}">0</span> days</span></td>
+              <td class="py-3 pr-4"><span class="inline-flex items-center gap-1"><span class="text-xl">🔥</span><span class="font-semibold">{{ item.streak }}</span> days</span></td>
               <td class="py-3 pr-4">
                 {% if item.completed_today %}
                   <span class="badge bg-success">✅ Done</span>
@@ -146,7 +141,7 @@
       <ul class="space-y-3 text-sm">
         <li class="flex items-center justify-between">
           <span class="flex items-center gap-2"><span>1.</span><span class="font-semibold">You</span></span>
-          <span class="px-2 py-0.5 rounded bg-white/10">streak: <span id="leaderYourStreak">0</span></span>
+          <span class="px-2 py-0.5 rounded bg-white/10">streak: <span id="leaderYourStreak">{{ overall_streak }}</span></span>
         </li>
         <li class="flex items-center justify-between">
           <span class="flex items-center gap-2"><span>2.</span><span>Friend A</span></span>
@@ -165,7 +160,7 @@
 
 <!-- Data payload from Django -->
 <script>
-  // History (last 7 days) from server → JS
+  // History + habits data only for chart & today progress
   const historyData = [
     {% for rec in history %}
       {
@@ -177,7 +172,6 @@
     {% endfor %}
   ];
 
-  // Habits today state
   const habits = [
     {% for item in habit_data %}
       { id: {{ item.habit.id }}, name: "{{ item.habit.name|escapejs }}", completed_today: {{ item.completed_today|yesno:"true,false" }} }
@@ -190,7 +184,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  // --- Quote of the Day (rotates daily) ---
+  // Quote rotation
   const quotes = [
     "Discipline is the bridge between goals and success.",
     "Small habits every day lead to big achievements.",
@@ -202,14 +196,13 @@
   const dayIndex = Math.floor((Date.parse(now.toDateString()) / 86400000)) % quotes.length;
   document.getElementById("quoteText").textContent = quotes[dayIndex];
 
-  // --- Aggregate history by date for weekly chart ---
+  // Aggregate history by date for weekly chart
   const byDate = {};
   historyData.forEach(r => {
     if (!byDate[r.date]) byDate[r.date] = 0;
     if (r.completed) byDate[r.date] += 1;
   });
 
-  // Build last 7 dates (ensure empty days show as 0)
   const days = [...Array(7)].map((_,i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
@@ -227,23 +220,14 @@
     type: 'bar',
     data: {
       labels,
-      datasets: [{
-        label: 'Completions',
-        data: values
-      }]
+      datasets: [{ label: 'Completions', data: values }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true, ticks: { precision:0 } } }
-    }
+    options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{precision:0} } } }
   });
 
-  // --- Today progress + weekly consistency ---
+  // Today progress bar
   const totalHabits = habits.length || 1;
   const doneToday = habits.filter(h => h.completed_today).length;
-  document.getElementById('doneTodayCount').textContent = doneToday;
-
   const todayPct = Math.round((doneToday / totalHabits) * 100);
   document.getElementById('todayPct').textContent = todayPct + '%';
   document.getElementById('todayBar').style.width = todayPct + '%';
@@ -253,36 +237,5 @@
   const weeklyPct = Math.round((totalCompletedLast7 / totalPossible) * 100);
   document.getElementById('weeklyConsistencyPct').textContent = weeklyPct + '%';
   document.getElementById('weeklyConsistencyBar').style.width = weeklyPct + '%';
-
-  // --- Streaks (last 7 only; extend later from backend) ---
-  // For each habit, count consecutive days from today backwards where completed==true
-  const byHabitByDate = {};
-  historyData.forEach(r => {
-    const key = r.habitId;
-    if (!byHabitByDate[key]) byHabitByDate[key] = {};
-    byHabitByDate[key][r.date] = r.completed;
-  });
-
-  const todayISO = new Date().toISOString().slice(0,10);
-  function dateMinus(iso, n) {
-    const d = new Date(iso);
-    d.setDate(d.getDate() - n);
-    return d.toISOString().slice(0,10);
-  }
-
-  let overall = 0;
-  habits.forEach(h => {
-    let streak = 0;
-    for (let i=0;i<7;i++){
-      const d = dateMinus(todayISO, i);
-      const ok = byHabitByDate[h.id] && byHabitByDate[h.id][d];
-      if (ok) streak += 1; else break;
-    }
-    overall = Math.max(overall, streak);
-    const el = document.querySelector(`[data-streak-for="${h.id}"]`);
-    if (el) el.textContent = streak;
-  });
-  document.getElementById('overallStreak').textContent = overall;
-  document.getElementById('leaderYourStreak').textContent = overall;
 </script>
 {% endblock %}

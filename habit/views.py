@@ -63,8 +63,57 @@ def home(request):
 
 # ✅ Dashboard (Welcome page after login)
 @login_required
+@login_required
 def dashboard(request):
-    return render(request, "dashboard.html")   # 👈 Bas welcome page show karega
+    habits = Habit.objects.filter(user=request.user)
+    today = now().date()
+    last_week = today - timedelta(days=7)
+
+    habit_data = []
+    done_today_count = 0
+    overall_streak = 0
+
+    for h in habits:
+        # Check if completed today
+        completed_today = HabitRecord.objects.filter(
+            habit=h, date=today, completed=True
+        ).exists()
+        if completed_today:
+            done_today_count += 1
+
+        # Calculate streak
+        streak = 0
+        check_date = today
+        while True:
+            record = HabitRecord.objects.filter(habit=h, date=check_date, completed=True).first()
+            if record:
+                streak += 1
+                check_date -= timedelta(days=1)
+            else:
+                break
+        overall_streak = max(overall_streak, streak)
+
+        habit_data.append({
+            "habit": h,
+            "completed_today": completed_today,
+            "streak": streak
+        })
+
+    history = HabitRecord.objects.filter(
+        habit__in=habits, date__gte=last_week
+    ).order_by("date")
+
+    context = {
+        "habit_data": habit_data,
+        "history": history,
+        "done_today_count": done_today_count,
+        "overall_streak": overall_streak
+    }
+
+    return render(request, "dashboard.html", context)
+
+
+   # 👈 Bas welcome page show karega
 
 # ✅ Add Habit
 @login_required
